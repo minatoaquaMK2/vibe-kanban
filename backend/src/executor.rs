@@ -9,7 +9,7 @@ use uuid::Uuid;
 use crate::{
     command_runner::{CommandError, CommandProcess, CommandRunner},
     executors::{
-        AiderExecutor, AmpExecutor, CCRExecutor, CharmOpencodeExecutor, ClaudeExecutor,
+        AaaExecutor, AiderExecutor, AmpExecutor, CCRExecutor, CharmOpencodeExecutor, ClaudeExecutor,
         CodexExecutor, EchoExecutor, GeminiExecutor, SetupScriptExecutor, SstOpencodeExecutor,
     },
 };
@@ -404,6 +404,7 @@ pub enum ExecutorConfig {
     SstOpencode,
     Aider,
     Codex,
+    Aaa,
 }
 
 // Constants for frontend
@@ -429,6 +430,7 @@ impl FromStr for ExecutorConfig {
             "sst-opencode" => Ok(ExecutorConfig::SstOpencode),
             "aider" => Ok(ExecutorConfig::Aider),
             "codex" => Ok(ExecutorConfig::Codex),
+            "aaa" => Ok(ExecutorConfig::Aaa),
             "setup-script" => Ok(ExecutorConfig::SetupScript {
                 script: "setup script".to_string(),
             }),
@@ -450,6 +452,7 @@ impl ExecutorConfig {
             ExecutorConfig::SstOpencode => Box::new(SstOpencodeExecutor::new()),
             ExecutorConfig::Aider => Box::new(AiderExecutor::new()),
             ExecutorConfig::Codex => Box::new(CodexExecutor::new()),
+            ExecutorConfig::Aaa => Box::new(AaaExecutor::new()),
             ExecutorConfig::SetupScript { script } => {
                 Box::new(SetupScriptExecutor::new(script.clone()))
             }
@@ -487,6 +490,9 @@ impl ExecutorConfig {
             ExecutorConfig::Codex => {
                 dirs::home_dir().map(|home| home.join(".codex").join("config.toml"))
             }
+            ExecutorConfig::Aaa => {
+                dirs::home_dir().map(|home| home.join(".assistant").join("config"))
+            }
             ExecutorConfig::SetupScript { .. } => None,
         }
     }
@@ -504,6 +510,7 @@ impl ExecutorConfig {
             ExecutorConfig::ClaudeCodeRouter => Some(vec!["mcpServers"]),
             ExecutorConfig::Aider => None, // Aider doesn't support MCP. https://github.com/Aider-AI/aider/issues/3314
             ExecutorConfig::Codex => None, // Codex uses TOML config, frontend doesn't handle TOML yet
+            ExecutorConfig::Aaa => Some(vec!["mcp", "servers"]), // AAA uses MCP servers
             ExecutorConfig::SetupScript { .. } => None, // Setup scripts don't support MCP
         }
     }
@@ -532,6 +539,7 @@ impl ExecutorConfig {
             ExecutorConfig::ClaudeCodeRouter => "Claude Code Router",
             ExecutorConfig::Aider => "Aider",
             ExecutorConfig::Codex => "Codex",
+            ExecutorConfig::Aaa => "AAA (Assistant Agent)",
             ExecutorConfig::SetupScript { .. } => "Setup Script",
         }
     }
@@ -550,6 +558,7 @@ impl std::fmt::Display for ExecutorConfig {
             ExecutorConfig::ClaudeCodeRouter => "claude-code-router",
             ExecutorConfig::Aider => "aider",
             ExecutorConfig::Codex => "codex",
+            ExecutorConfig::Aaa => "aaa",
             ExecutorConfig::SetupScript { .. } => "setup-script",
         };
         write!(f, "{}", s)

@@ -26,7 +26,7 @@ export type SoundConstants = { sound_files: Array<SoundFile>, sound_labels: Arra
 
 export type ConfigConstants = { editor: EditorConstants, sound: SoundConstants, mode: Environment, };
 
-export type ExecutorConfig = { "type": "echo" } | { "type": "claude" } | { "type": "claude-plan" } | { "type": "amp" } | { "type": "gemini" } | { "type": "setup-script", script: string, } | { "type": "claude-code-router" } | { "type": "charm-opencode" } | { "type": "sst-opencode" } | { "type": "aider" } | { "type": "codex" };
+export type ExecutorConfig = { "type": "echo" } | { "type": "claude" } | { "type": "claude-plan" } | { "type": "amp" } | { "type": "gemini" } | { "type": "setup-script", script: string, } | { "type": "claude-code-router" } | { "type": "charm-opencode" } | { "type": "sst-opencode" } | { "type": "aider" } | { "type": "codex" } | { "type": "aaa" };
 
 export type ExecutorConstants = { executor_types: Array<ExecutorConfig>, executor_labels: Array<string>, };
 
@@ -138,6 +138,7 @@ export const EXECUTOR_TYPES: string[] = [
     "sst-opencode",
     "aider",
     "codex",
+    "aaa",
 ];
 
 export const EDITOR_TYPES: EditorType[] = [
@@ -159,7 +160,8 @@ export const EXECUTOR_LABELS: Record<string, string> = {
     "claude-code-router": "Claude Code Router",
     "sst-opencode": "SST Opencode",
     "aider": "Aider",
-    "codex": "Codex"
+    "codex": "Codex",
+    "aaa": "AAA (Assistant Agent)"
 };
 
 export const EDITOR_LABELS: Record<string, string> = {

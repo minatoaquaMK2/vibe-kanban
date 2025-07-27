@@ -1,3 +1,4 @@
+pub mod aaa;
 pub mod aider;
 pub mod amp;
 pub mod ccr;
@@ -11,6 +12,7 @@ pub mod gemini;
 pub mod setup_script;
 pub mod sst_opencode;
 
+pub use aaa::AaaExecutor;
 pub use aider::AiderExecutor;
 pub use amp::AmpExecutor;
 pub use ccr::CCRExecutor;

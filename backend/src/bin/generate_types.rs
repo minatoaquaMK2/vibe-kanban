@@ -16,6 +16,7 @@ export const EXECUTOR_TYPES: string[] = [
     "sst-opencode",
     "aider",
     "codex",
+    "aaa",
 ];
 
 export const EDITOR_TYPES: EditorType[] = [
@@ -37,7 +38,8 @@ export const EXECUTOR_LABELS: Record<string, string> = {
     "claude-code-router": "Claude Code Router",
     "sst-opencode": "SST Opencode",
     "aider": "Aider",
-    "codex": "Codex"
+    "codex": "Codex",
+    "aaa": "AAA (Assistant Agent)"
 };
 
 export const EDITOR_LABELS: Record<string, string> = {
@@ -55,7 +57,8 @@ export const MCP_SUPPORTED_EXECUTORS: string[] = [
     "gemini",
     "sst-opencode",
     "charm-opencode",
-    "claude-code-router"
+    "claude-code-router",
+    "aaa"
 ];
 
 export const SOUND_FILES: SoundFile[] = [
