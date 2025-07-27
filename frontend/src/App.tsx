@@ -5,17 +5,14 @@ import { Projects } from '@/pages/projects';
 import { ProjectTasks } from '@/pages/project-tasks';
 
 import { Settings } from '@/pages/Settings';
-import { McpServers } from '@/pages/McpServers';
 import { DisclaimerDialog } from '@/components/DisclaimerDialog';
 import { OnboardingDialog } from '@/components/OnboardingDialog';
-import { PrivacyOptInDialog } from '@/components/PrivacyOptInDialog';
 import { ConfigProvider, useConfig } from '@/components/config-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import type { EditorType, ExecutorConfig } from 'shared/types';
 import { configApi } from '@/lib/api';
 import * as Sentry from '@sentry/react';
 import { Loader } from '@/components/ui/loader';
-import { GitHubLoginDialog } from '@/components/GitHubLoginDialog';
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
@@ -23,8 +20,6 @@ function AppContent() {
   const { config, updateConfig, loading } = useConfig();
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showPrivacyOptIn, setShowPrivacyOptIn] = useState(false);
-  const [showGitHubLogin, setShowGitHubLogin] = useState(false);
   const showNavbar = true;
 
   useEffect(() => {
@@ -33,15 +28,28 @@ function AppContent() {
       if (config.disclaimer_acknowledged) {
         setShowOnboarding(!config.onboarding_acknowledged);
         if (config.onboarding_acknowledged) {
-          if (!config.github_login_acknowledged) {
-            setShowGitHubLogin(true);
-          } else if (!config.telemetry_acknowledged) {
-            setShowPrivacyOptIn(true);
+          // Auto-acknowledge GitHub login and privacy opt-in to skip these dialogs
+          if (!config.github_login_acknowledged || !config.telemetry_acknowledged) {
+            const autoAcknowledgeDialogs = async () => {
+              const updatedConfig = {
+                ...config,
+                github_login_acknowledged: true,
+                telemetry_acknowledged: true,
+                analytics_enabled: false, // Default to "no thanks"
+              };
+              updateConfig(updatedConfig);
+              try {
+                await configApi.saveConfig(updatedConfig);
+              } catch (err) {
+                console.error('Error auto-acknowledging dialogs:', err);
+              }
+            };
+            autoAcknowledgeDialogs();
           }
         }
       }
     }
-  }, [config]);
+  }, [config, updateConfig]);
 
   const handleDisclaimerAccept = async () => {
     if (!config) return;
@@ -80,48 +88,7 @@ function AppContent() {
     }
   };
 
-  const handlePrivacyOptInComplete = async (telemetryEnabled: boolean) => {
-    if (!config) return;
 
-    const updatedConfig = {
-      ...config,
-      telemetry_acknowledged: true,
-      analytics_enabled: telemetryEnabled,
-    };
-
-    updateConfig(updatedConfig);
-
-    try {
-      await configApi.saveConfig(updatedConfig);
-      setShowPrivacyOptIn(false);
-    } catch (err) {
-      console.error('Error saving config:', err);
-    }
-  };
-
-  const handleGitHubLoginComplete = async () => {
-    try {
-      // Refresh the config to get the latest GitHub authentication state
-      const latestConfig = await configApi.getConfig();
-      updateConfig(latestConfig);
-      setShowGitHubLogin(false);
-
-      // If user skipped (no GitHub token), we need to manually set the acknowledgment
-
-      const updatedConfig = {
-        ...latestConfig,
-        github_login_acknowledged: true,
-      };
-      updateConfig(updatedConfig);
-      await configApi.saveConfig(updatedConfig);
-    } catch (err) {
-      console.error('Error refreshing config:', err);
-    } finally {
-      if (!config?.telemetry_acknowledged) {
-        setShowPrivacyOptIn(true);
-      }
-    }
-  };
 
   if (loading) {
     return (
@@ -134,10 +101,6 @@ function AppContent() {
   return (
     <ThemeProvider initialTheme={config?.theme || 'system'}>
       <div className="h-screen flex flex-col bg-background">
-        <GitHubLoginDialog
-          open={showGitHubLogin}
-          onOpenChange={handleGitHubLoginComplete}
-        />
         <DisclaimerDialog
           open={showDisclaimer}
           onAccept={handleDisclaimerAccept}
@@ -145,10 +108,6 @@ function AppContent() {
         <OnboardingDialog
           open={showOnboarding}
           onComplete={handleOnboardingComplete}
-        />
-        <PrivacyOptInDialog
-          open={showPrivacyOptIn}
-          onComplete={handlePrivacyOptInComplete}
         />
         {showNavbar && <Navbar />}
         <div className="flex-1 overflow-y-scroll">
@@ -166,7 +125,6 @@ function AppContent() {
             />
 
             <Route path="/settings" element={<Settings />} />
-            <Route path="/mcp-servers" element={<McpServers />} />
           </SentryRoutes>
         </div>
       </div>

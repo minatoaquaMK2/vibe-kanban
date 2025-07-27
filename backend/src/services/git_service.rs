@@ -274,7 +274,10 @@ impl GitService {
                         | git2::Status::WT_TYPECHANGE,
                 ) {
                     if let Some(path) = entry.path() {
-                        dirty_files.push(path.to_string());
+                        // Skip files in the .agent/ directory
+                        if !path.starts_with(".agent/") {
+                            dirty_files.push(path.to_string());
+                        }
                     }
                 }
             }
@@ -611,6 +614,11 @@ impl GitService {
         diff.foreach(
             &mut |delta, _progress| {
                 if let Some(path_str) = delta.new_file().path().and_then(|p| p.to_str()) {
+                    // Skip files in the .agent/ directory
+                    if path_str.starts_with(".agent/") {
+                        return true;
+                    }
+
                     let old_file = delta.old_file();
                     let new_file = delta.new_file();
 
@@ -671,6 +679,11 @@ impl GitService {
         unstaged_diff.foreach(
             &mut |delta, _progress| {
                 if let Some(path_str) = delta.new_file().path().and_then(|p| p.to_str()) {
+                    // Skip files in the .agent/ directory
+                    if path_str.starts_with(".agent/") {
+                        return true;
+                    }
+
                     if let Err(e) = self.process_unstaged_file(
                         files,
                         &worktree_repo,
@@ -1369,5 +1382,57 @@ mod tests {
         let git_service = GitService::new(temp_dir.path()).unwrap();
         let branch_name = git_service.get_default_branch_name().unwrap();
         assert_eq!(branch_name, "main");
+    }
+
+    #[test]
+    fn test_agent_directory_filtering() {
+        let (temp_dir, repo) = create_test_repo();
+        let git_service = GitService::new(temp_dir.path()).unwrap();
+
+        // Create initial commit
+        git_service.create_initial_commit(&repo).unwrap();
+
+        // Create some test files including ones in .agent/ directory
+        let test_file = temp_dir.path().join("test.txt");
+        std::fs::write(&test_file, "test content").unwrap();
+
+        let agent_dir = temp_dir.path().join(".agent");
+        std::fs::create_dir_all(&agent_dir).unwrap();
+        let agent_file = agent_dir.join("agent_file.txt");
+        std::fs::write(&agent_file, "agent content").unwrap();
+
+        // Add and commit both files
+        let mut index = repo.index().unwrap();
+        index.add_path(Path::new("test.txt")).unwrap();
+        index.add_path(Path::new(".agent/agent_file.txt")).unwrap();
+        index.write().unwrap();
+
+        // Create a commit
+        let signature = repo.signature().unwrap();
+        let tree_id = index.write_tree().unwrap();
+        let tree = repo.find_tree(tree_id).unwrap();
+        let head = repo.head().unwrap().peel_to_commit().unwrap();
+        repo.commit(
+            Some("HEAD"),
+            &signature,
+            &signature,
+            "Add test files",
+            &tree,
+            &[&head],
+        ).unwrap();
+
+        // Now modify the agent file to create unstaged changes
+        std::fs::write(&agent_file, "modified agent content").unwrap();
+
+        // check_worktree_clean should pass because .agent/ files are ignored
+        let result = git_service.check_worktree_clean(&repo);
+        assert!(result.is_ok(), "check_worktree_clean should ignore .agent/ files");
+
+        // Modify the regular file to create unstaged changes
+        std::fs::write(&test_file, "modified test content").unwrap();
+
+        // Now check_worktree_clean should fail because regular files are dirty
+        let result = git_service.check_worktree_clean(&repo);
+        assert!(result.is_err(), "check_worktree_clean should detect dirty regular files");
     }
 }
