@@ -126,6 +126,7 @@ pub struct CreatePrParams<'a> {
     pub title: &'a str,
     pub body: Option<&'a str>,
     pub base_branch: Option<&'a str>,
+    pub enterprise_url: Option<&'a str>,
 }
 
 #[derive(Debug, Deserialize, TS)]
@@ -892,7 +893,11 @@ impl TaskAttempt {
                 .await?;
 
         // Create GitHub service instance
-        let github_service = GitHubService::new(params.github_token)?;
+        let github_service = if let Some(enterprise_url) = params.enterprise_url {
+            GitHubService::new_with_base_url(params.github_token, enterprise_url)?
+        } else {
+            GitHubService::new(params.github_token)?
+        };
 
         // Use GitService to get the remote URL, then create GitHubRepoInfo
         let git_service = GitService::new(&ctx.project.git_repo_path)?;

@@ -302,6 +302,27 @@ export function Settings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="github-enterprise-url">GitHub Enterprise URL (Optional)</Label>
+                <Input
+                  id="github-enterprise-url"
+                  type="url"
+                  placeholder="https://github.company.com/api/v3"
+                  value={config.github.enterprise_url || ''}
+                  onChange={(e) =>
+                    updateConfig({
+                      github: {
+                        ...config.github,
+                        enterprise_url: e.target.value || null,
+                      },
+                    })
+                  }
+                />
+                <p className="text-sm text-muted-foreground">
+                  For GitHub Enterprise Server, enter your API base URL (e.g., https://github.company.com/api/v3).
+                  Leave empty for GitHub.com.
+                </p>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="github-token">Personal Access Token</Label>
                 <Input
                   id="github-token"
@@ -321,7 +342,10 @@ export function Settings() {
                   GitHub Personal Access Token with 'repo' permissions. Required
                   for creating pull requests.{' '}
                   <a
-                    href="https://github.com/settings/tokens"
+                    href={config.github.enterprise_url ?
+                      `${config.github.enterprise_url.replace('/api/v3', '')}/settings/tokens` :
+                      "https://github.com/settings/tokens"
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"

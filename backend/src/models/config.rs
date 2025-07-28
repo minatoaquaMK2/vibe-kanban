@@ -101,6 +101,7 @@ pub struct GitHubConfig {
     pub username: Option<String>,
     pub primary_email: Option<String>,
     pub default_pr_base: Option<String>,
+    pub enterprise_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -248,6 +249,7 @@ impl Default for GitHubConfig {
             username: None,
             primary_email: None,
             default_pr_base: Some("main".to_string()),
+            enterprise_url: None,
         }
     }
 }

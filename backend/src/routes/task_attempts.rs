@@ -400,6 +400,7 @@ pub async fn create_github_pr(
             title: &request.title,
             body: request.body.as_deref(),
             base_branch: Some(&base_branch),
+            enterprise_url: config.github.enterprise_url.as_deref(),
         },
     )
     .await

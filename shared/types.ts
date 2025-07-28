@@ -14,7 +14,7 @@ export type ThemeMode = "light" | "dark" | "system" | "purple" | "green" | "blue
 
 export type EditorConfig = { editor_type: EditorType, custom_command: string | null, };
 
-export type GitHubConfig = { pat: string | null, token: string | null, username: string | null, primary_email: string | null, default_pr_base: string | null, };
+export type GitHubConfig = { pat: string | null, token: string | null, username: string | null, primary_email: string | null, default_pr_base: string | null, enterprise_url: string | null, };
 
 export type EditorType = "vscode" | "cursor" | "windsurf" | "intellij" | "zed" | "custom";
 
@@ -179,7 +179,8 @@ export const MCP_SUPPORTED_EXECUTORS: string[] = [
     "gemini",
     "sst-opencode",
     "charm-opencode",
-    "claude-code-router"
+    "claude-code-router",
+    "aaa"
 ];
 
 export const SOUND_FILES: SoundFile[] = [

@@ -108,6 +108,22 @@ impl GitHubService {
         Ok(Self { client })
     }
 
+    /// Create a new GitHub service with authentication and custom base URL for GitHub Enterprise
+    pub fn new_with_base_url(github_token: &str, base_url: &str) -> Result<Self, GitHubServiceError> {
+        let client = OctocrabBuilder::new()
+            .personal_token(github_token.to_string())
+            .base_uri(base_url)
+            .map_err(|e| {
+                GitHubServiceError::Auth(format!("Failed to set base URI: {}", e))
+            })?
+            .build()
+            .map_err(|e| {
+                GitHubServiceError::Auth(format!("Failed to create GitHub client: {}", e))
+            })?;
+
+        Ok(Self { client })
+    }
+
     /// Create a pull request on GitHub
     pub async fn create_pr(
         &self,

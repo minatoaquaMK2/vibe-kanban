@@ -52,11 +52,21 @@ pub async fn list_repositories(
 
     // Create GitHub service with token
     let github_token = github_config.token.as_deref().unwrap();
-    let github_service = match GitHubService::new(github_token) {
-        Ok(service) => service,
-        Err(e) => {
-            tracing::error!("Failed to create GitHub service: {}", e);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    let github_service = if let Some(enterprise_url) = &github_config.enterprise_url {
+        match GitHubService::new_with_base_url(github_token, enterprise_url) {
+            Ok(service) => service,
+            Err(e) => {
+                tracing::error!("Failed to create GitHub service with enterprise URL: {}", e);
+                return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            }
+        }
+    } else {
+        match GitHubService::new(github_token) {
+            Ok(service) => service,
+            Err(e) => {
+                tracing::error!("Failed to create GitHub service: {}", e);
+                return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            }
         }
     };
 

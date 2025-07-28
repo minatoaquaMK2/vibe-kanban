@@ -1091,13 +1091,24 @@ impl GitService {
         })?;
 
         // Parse GitHub URL (supports both HTTPS and SSH formats)
-        let github_regex = regex::Regex::new(r"github\.com[:/]([^/]+)/(.+?)(?:\.git)?/?$")
+        // This regex supports both github.com and GitHub Enterprise domains
+        let github_regex = regex::Regex::new(r"(?:https?://|git@)([^/]+)[:/]([^/]+)/(.+?)(?:\.git)?/?$")
             .map_err(|e| GitServiceError::InvalidRepository(format!("Regex error: {}", e)))?;
 
         if let Some(captures) = github_regex.captures(url) {
-            let owner = captures.get(1).unwrap().as_str().to_string();
-            let repo_name = captures.get(2).unwrap().as_str().to_string();
-            Ok((owner, repo_name))
+            let domain = captures.get(1).unwrap().as_str();
+            let owner = captures.get(2).unwrap().as_str().to_string();
+            let repo_name = captures.get(3).unwrap().as_str().to_string();
+
+            // Check if it's a GitHub domain (github.com or GitHub Enterprise)
+            if domain.contains("github") {
+                Ok((owner, repo_name))
+            } else {
+                Err(GitServiceError::InvalidRepository(format!(
+                    "Not a GitHub repository: {}",
+                    url
+                )))
+            }
         } else {
             Err(GitServiceError::InvalidRepository(format!(
                 "Not a GitHub repository: {}",

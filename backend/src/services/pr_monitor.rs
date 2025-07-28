@@ -162,6 +162,8 @@ impl PrMonitorService {
         &self,
         pr_info: &PrInfo,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        // For now, we'll use the standard GitHub service since we don't have enterprise_url in PrInfo
+        // TODO: Add enterprise_url to PrInfo if needed for enterprise support in PR monitoring
         let github_service = GitHubService::new(&pr_info.github_token)?;
 
         let repo_info = GitHubRepoInfo {
